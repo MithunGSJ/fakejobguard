@@ -13,3 +13,5 @@ build/
 *.egg-info/
 bert_model/
 _extracted_plan.txt
+.ipynb_checkpoints/
+backend/models/bert_model/

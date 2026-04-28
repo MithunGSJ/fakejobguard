@@ -1,5 +1,5 @@
 # backend/routers/analyze.py
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 from services.text_analyzer import analyze_text
@@ -63,6 +63,12 @@ async def analyze_full(
     At least one input must be provided.
     Returns combined risk score from all provided inputs.
     """
+    # TC-07: Validate at least one input is provided
+    if not text and not url and not file:
+        raise HTTPException(
+            status_code=422,
+            detail="At least one input is required: text, url, or image file."
+        )
     text_result = analyze_text(text) if text else None
     image_result = analyze_image(await file.read()) if file else None
     url_result = check_url_safety(url) if url else None

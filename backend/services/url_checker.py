@@ -57,10 +57,39 @@ def check_url_safety(url: str) -> dict:
                 f'Could not verify URL with Safe Browsing: {str(e)}'
             )
 
+    # 1.5. Heuristic: suspicious TLDs and URL patterns (runs before WHOIS)
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(url if url.startswith('http') else f'http://{url}')
+        domain = parsed.netloc.lower().replace('www.', '')
+        url_lower = url.lower()
+
+        # Suspicious TLDs commonly used in scam sites
+        suspicious_tlds = ['.xyz', '.top', '.click', '.win', '.loan', '.bid',
+                           '.work', '.download', '.racing', '.science', '.faith']
+        if any(domain.endswith(tld) for tld in suspicious_tlds):
+            flags.append(f'Suspicious TLD detected in domain: {domain}')
+            risk += 30
+
+        # Scam keywords in the URL itself
+        scam_url_keywords = ['free-job', 'earn-money', 'work-from-home', 'daily-earn',
+                             'guaranteed', 'no-experience', 'job-offer', 'cash-daily']
+        found_kws = [kw for kw in scam_url_keywords if kw in url_lower]
+        if found_kws:
+            flags.append(f'Scam keywords found in URL: {", ".join(found_kws)}')
+            risk += 25
+
+        # HTTP (no SSL) is a warning sign for job sites
+        if parsed.scheme == 'http':
+            flags.append('URL uses plain HTTP (not HTTPS) — insecure')
+            risk += 10
+    except Exception:
+        pass
+
     # 2. Check domain age using WHOIS
     try:
-        from urllib.parse import urlparse
-        domain = urlparse(url).netloc.replace('www.', '')
+        from urllib.parse import urlparse as _up
+        domain = _up(url).netloc.replace('www.', '')
         w = whois.whois(domain)
         creation_date = w.creation_date
         if isinstance(creation_date, list):
