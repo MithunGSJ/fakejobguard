@@ -4,10 +4,10 @@ import re
 import numpy as np
 import os
 
-# Try importing BERT dependencies
+# Try importing BERT dependencies (torch must come first)
 try:
-    from transformers import BertTokenizer, BertForSequenceClassification
     import torch
+    from transformers import BertTokenizer, BertForSequenceClassification
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
