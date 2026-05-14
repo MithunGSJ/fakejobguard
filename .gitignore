@@ -8,12 +8,10 @@ __pycache__/
 # Environment — NEVER commit real keys
 .env
 
-# Large model files — hosted on HF Hub instead
+# BERT model too large for GitHub
 backend/models/bert_model/
-backend/models/*.pkl
 
-# Keep tfidf_vectorizer.pkl (tiny — 0.38MB) by exception
-!backend/models/tfidf_vectorizer.pkl
+# pkl model files are committed directly (all under 100MB)
 
 # Node
 node_modules/
