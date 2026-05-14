@@ -6,13 +6,6 @@ def calculate_final_risk(text_result=None, image_result=None,
     """
     Combines text, image, and URL risk scores into one final risk score.
     Weights: text=60%, image=25%, url=15%
-
-    Returns:
-    - final_score: int (0-100)
-    - label: str (LIKELY SAFE / SUSPICIOUS / LIKELY SCAM)
-    - color: str (green / orange / red)
-    - flags: list of all flags from all modules
-    - components: dict of individual module scores
     """
     weighted_score = 0
     all_flags = []
@@ -21,26 +14,41 @@ def calculate_final_risk(text_result=None, image_result=None,
     if text_result:
         score = text_result.get('risk_score', 0)
         weighted_score += score * 0.60
-        all_flags.extend(
-            [f"[TEXT] {r['word']} (impact: {r['impact']})"
-             for r in text_result.get('top_reasons', [])]
-        )
+
+        # Heuristic flags (phone, fee, salary, etc.) — human readable
+        heuristic_flags = text_result.get('heuristic_flags', [])
+        all_flags.extend(heuristic_flags)
+
+        # Gemini red flags (if available)
+        gemini = text_result.get('gemini', {})
+        if gemini:
+            gemini_flags = gemini.get('red_flags', [])
+            for gf in gemini_flags:
+                if not any(gf[:30] in hf for hf in all_flags):
+                    all_flags.append(gf)
+            # Add Gemini explanation as summary
+            if gemini.get('verdict') in ('SCAM', 'SUSPICIOUS') and gemini.get('explanation'):
+                all_flags.append(f"AI Analysis: {gemini['explanation']}")
+
+        # Fallback: use SHAP words if no other flags
+        if not all_flags:
+            all_flags.extend(
+                [f"Suspicious term detected: '{r['word']}'"
+                 for r in text_result.get('top_reasons', [])]
+            )
+
         components['text'] = score
 
     if image_result:
         score = image_result.get('risk_score', 0)
         weighted_score += score * 0.25
-        all_flags.extend(
-            [f'[IMAGE] {f}' for f in image_result.get('flags', [])]
-        )
+        all_flags.extend([f'[Image] {f}' for f in image_result.get('flags', [])])
         components['image'] = score
 
     if url_result:
         score = url_result.get('risk_score', 0)
         weighted_score += score * 0.15
-        all_flags.extend(
-            [f'[URL] {f}' for f in url_result.get('flags', [])]
-        )
+        all_flags.extend([f'[URL] {f}' for f in url_result.get('flags', [])])
         components['url'] = score
 
     final_score = min(int(weighted_score), 100)
@@ -54,6 +62,9 @@ def calculate_final_risk(text_result=None, image_result=None,
     else:
         label = 'LIKELY SAFE'
         color = 'green'
+
+    if not all_flags:
+        all_flags = ['No suspicious signals detected. This posting appears safe.']
 
     return {
         'final_score': final_score,

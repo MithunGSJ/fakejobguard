@@ -1,4 +1,5 @@
 # backend/requirements.txt — Production (Render)
+
 # Core API framework
 fastapi
 uvicorn[standard]
@@ -20,6 +21,9 @@ shap
 
 # Image handling
 Pillow
+
+# Gemini AI
+google-generativeai
 
 # Utilities
 python-dotenv

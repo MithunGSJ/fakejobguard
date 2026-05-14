@@ -6,6 +6,7 @@ from services.text_analyzer import analyze_text
 from services.image_analyzer import analyze_image
 from services.url_checker import check_url_safety
 from services.risk_scorer import calculate_final_risk
+from services.gemini_analyzer import analyze_with_gemini
 
 router = APIRouter(prefix='/analyze', tags=['Analysis'])
 
@@ -18,10 +19,60 @@ class URLRequest(BaseModel):
     url: str
 
 
+def _merge_gemini(text_result: dict, gemini_result: dict) -> dict:
+    """
+    Merge Gemini AI result into text_result.
+    Gemini overrides the risk score if it's available and confident.
+    """
+    if not gemini_result.get('available'):
+        return text_result
+
+    # If Gemini says it's NOT a job posting, override entirely
+    if gemini_result.get('is_job_posting') is False:
+        return {
+            **text_result,
+            'risk_score': 0,
+            'probability': 0.01,
+            'prediction': 0,
+            'warning': gemini_result.get('reason', 'Not a job posting'),
+            'gemini': gemini_result
+        }
+
+    # If Gemini analyzed a real job posting, blend its score
+    gemini_score = gemini_result.get('risk_score')
+    if gemini_score is not None:
+        ml_score = text_result.get('risk_score', 0)
+        # Blend: 50% Gemini (contextual AI) + 50% ML (trained model)
+        blended = int(ml_score * 0.4 + gemini_score * 0.6)
+        text_result['risk_score'] = blended
+        text_result['probability'] = round(blended / 100, 3)
+        text_result['prediction'] = 1 if blended > 50 else 0
+
+    # Add Gemini red flags to heuristic_flags
+    gemini_flags = gemini_result.get('red_flags', [])
+    existing_flags = text_result.get('heuristic_flags', [])
+    text_result['heuristic_flags'] = existing_flags + gemini_flags
+    text_result['gemini'] = {
+        'verdict': gemini_result.get('verdict'),
+        'confidence': gemini_result.get('confidence'),
+        'explanation': gemini_result.get('explanation'),
+        'red_flags': gemini_flags,
+        'green_flags': gemini_result.get('green_flags', [])
+    }
+
+    return text_result
+
+
 @router.post('/text')
 def analyze_text_endpoint(req: TextRequest):
-    """Analyze job posting text for fraud indicators."""
+    """Analyze job posting text — ML + Gemini AI + heuristic rules."""
     text_result = analyze_text(req.text)
+
+    # Only run Gemini if text passed basic validation (no 'warning' that blocked it)
+    if not text_result.get('warning') or text_result.get('risk_score', 0) > 0:
+        gemini_result = analyze_with_gemini(req.text)
+        text_result = _merge_gemini(text_result, gemini_result)
+
     final = calculate_final_risk(text_result=text_result)
     return {
         'text_analysis': text_result,
@@ -43,7 +94,7 @@ async def analyze_image_endpoint(file: UploadFile = File(...)):
 
 @router.post('/url')
 def analyze_url_endpoint(req: URLRequest):
-    """Check a job posting URL for safety (phishing, domain age, redirects)."""
+    """Check a job posting URL for safety."""
     url_result = check_url_safety(req.url)
     final = calculate_final_risk(url_result=url_result)
     return {
@@ -59,19 +110,25 @@ async def analyze_full(
     file: Optional[UploadFile] = File(None)
 ):
     """
-    Full analysis — analyze text, image, and URL all at once.
+    Full analysis — text + image + URL with Gemini AI reasoning.
     At least one input must be provided.
-    Returns combined risk score from all provided inputs.
     """
-    # TC-07: Validate at least one input is provided
     if not text and not url and not file:
         raise HTTPException(
             status_code=422,
-            detail="At least one input is required: text, url, or image file."
+            detail='At least one input is required: text, url, or image file.'
         )
-    text_result = analyze_text(text) if text else None
+
+    text_result = None
+    if text:
+        text_result = analyze_text(text)
+        # Run Gemini on text if it passed basic validation
+        gemini_result = analyze_with_gemini(text)
+        text_result = _merge_gemini(text_result, gemini_result)
+
     image_result = analyze_image(await file.read()) if file else None
-    url_result = check_url_safety(url) if url else None
+    url_result   = check_url_safety(url) if url else None
+
     final = calculate_final_risk(text_result, image_result, url_result)
     return {
         'text_analysis': text_result,
