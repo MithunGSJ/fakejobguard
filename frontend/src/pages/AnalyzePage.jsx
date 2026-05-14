@@ -124,7 +124,7 @@ export default function AnalyzePage() {
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">🔗</span>
                 <input
                   id="url-input"
-                  type="url"
+                  type="text"
                   className="w-full bg-slate-900/70 border border-slate-600/50 rounded-xl pl-10 pr-4 py-4 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
                   placeholder="https://www.example.com/jobs/12345"
                   value={url}

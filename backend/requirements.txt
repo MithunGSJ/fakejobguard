@@ -1,4 +1,4 @@
-# backend/requirements.txt
+# backend/requirements.txt — Production (Render)
 # Core API framework
 fastapi
 uvicorn[standard]
@@ -18,15 +18,8 @@ imbalanced-learn
 joblib
 shap
 
-# NLP & Vision (optional — install separately for BERT/CLIP)
-# torch
-# transformers
-# Pillow is always needed (for image handling fallback)
+# Image handling
 Pillow
 
 # Utilities
 python-dotenv
-
-# Visualization (for ML notebooks only)
-matplotlib
-seaborn

@@ -1,17 +1,35 @@
+# Python
 venv/
 __pycache__/
-.env
-*.pkl
-node_modules/
-datasets/raw/
-datasets/augmented/
-.DS_Store
 *.pyc
+*.egg-info/
+.ipynb_checkpoints/
+
+# Environment — NEVER commit real keys
+.env
+
+# Large model files — hosted on HF Hub instead
+backend/models/bert_model/
+backend/models/*.pkl
+
+# Keep tfidf_vectorizer.pkl (tiny — 0.38MB) by exception
+!backend/models/tfidf_vectorizer.pkl
+
+# Node
+node_modules/
 dist/
 build/
+
+# Data (raw/augmented too large)
+datasets/raw/
+datasets/augmented/
+
+# OS / Editor
+.DS_Store
 .vscode/
-*.egg-info/
-bert_model/
+
+# Reports / PPT (not needed in repo)
+*.pptx
+FakeJobGuard_*.html
+FakeJobGuard_*.txt
 _extracted_plan.txt
-.ipynb_checkpoints/
-backend/models/bert_model/

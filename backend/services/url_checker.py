@@ -19,6 +19,9 @@ def check_url_safety(url: str) -> dict:
     - risk_score: int (0-100)
     - flags: list of strings explaining what was found
     """
+    if not url.startswith(('http://', 'https://')):
+        url = 'http://' + url
+
     flags = []
     risk = 0
 

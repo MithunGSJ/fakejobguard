@@ -13,17 +13,17 @@ _CLIP_AVAILABLE = None  # None = not checked yet
 
 # These are the text prompts we compare the image against
 SUSPICIOUS_PROMPTS = [
-    'a fake job advertisement with unrealistic salary',
-    'a scam job posting with work from home',
-    'a phishing advertisement asking for personal information',
-    'a stock photo office that looks fake',
-    'a WhatsApp message with job offer',
+    'a WhatsApp scam message with fake job offer and unrealistic salary',
+    'a fraudulent work from home job posting promising easy money',
+    'a spam advertisement asking for registration fee or personal bank details',
+    'a low quality screenshot of a suspicious job offer',
 ]
 
 LEGIT_PROMPTS = [
-    'a professional company job advertisement',
-    'a legitimate corporate hiring poster',
-    'an official company recruitment banner',
+    'an official campus placement notice from a college or university',
+    'a professional company job advertisement with company logo',
+    'a legitimate corporate recruitment document or hiring poster',
+    'a formal job circular issued by a government or reputed organization',
 ]
 
 
@@ -86,15 +86,17 @@ def _clip_analyze(image_bytes: bytes) -> dict:
 
         max_suspicious = max(suspicious_scores)
         max_legit = max(legit_scores)
+        suspicious_margin = max_suspicious - max_legit
 
-        if max_suspicious > 0.3:
+        # Only flag if suspicious score is clearly dominant (not just barely above threshold)
+        # Requires: suspicious > 0.5 AND suspicious > legit by at least 0.15 margin
+        if max_suspicious > 0.5 and suspicious_margin > 0.15:
             susp_idx = suspicious_scores.index(max_suspicious)
-            flags.append(f'Image resembles: {SUSPICIOUS_PROMPTS[susp_idx]}')
-            risk += int(max_suspicious * 80)
-
-        if max_legit > max_suspicious:
-            flags.append('Image appears to be from a professional company')
-            risk = max(0, risk - 20)
+            flags.append(f'Visual pattern suggests possible scam: {SUSPICIOUS_PROMPTS[susp_idx]}')
+            risk += int(max_suspicious * 60)
+        elif max_legit > max_suspicious:
+            # Legit wins — positive signal, reduce risk
+            risk = max(0, risk - 10)
 
         # Check image dimensions — very small images are suspicious
         w, h = image.size

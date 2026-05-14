@@ -1,0 +1,43 @@
+================================================
+FAKEJOBGUARD - TEST EXAMPLES FOR PRESENTATION
+================================================
+You can copy and paste these into the running app at http://localhost:5173/analyze
+
+------------------------------------------------
+🔴 1. OBVIOUS SCAM (Text Tab)
+------------------------------------------------
+Work from home! Earn Rs. 50,000 per month with NO experience needed. Just 2 hours of typing work daily. Guaranteed cash income. Urgent hiring, apply immediately. Send message on WhatsApp to 9876543210 for free registration today!
+
+[Why it works: BERT instantly catches "whatsapp", "cash", "guaranteed", and unrealistic promises.]
+
+
+------------------------------------------------
+🔴 2. SOPHISTICATED SCAM (Text Tab)
+------------------------------------------------
+Data Entry Executive required for immediate joining at multinational company. Salary: 4 LPA. Candidates must have basic computer knowledge. Please note: Shortlisted candidates must pay a refundable security deposit of Rs. 2000 for company laptop and training materials before the interview.
+
+[Why it works: Flags the classic "refundable security deposit" employment fraud indicator.]
+
+
+------------------------------------------------
+✅ 3. REAL, LEGITIMATE JOB (Text Tab)
+------------------------------------------------
+Software Engineer II - Backend. We are looking for an experienced Python developer to join our core infrastructure team in Bangalore. Requirements: 3+ years experience with Django/FastAPI, strong understanding of REST APIs, and experience with AWS. We offer competitive CTC (12-18 LPA), comprehensive health insurance, and flexible hybrid working hours. Apply via our official careers portal.
+
+[Why it works: Professional language, specific skills, and realistic benefits score it as LIKELY SAFE.]
+
+
+------------------------------------------------
+🔴 4. SUSPICIOUS SCAM URL (URL Tab)
+------------------------------------------------
+http://earn-money-fast-daily-jobs.xyz/apply-now
+
+[Why it works: The URL Checker flags the suspicious ".xyz" domain extension and scammy keywords.]
+
+
+------------------------------------------------
+✅ 5. SAFE CORPORATE URL (URL Tab)
+------------------------------------------------
+https://careers.google.com/jobs/results/
+
+[Why it works: Domain age checker and Google Safe Browsing verify it is a trusted, long-standing domain.]
