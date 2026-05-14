@@ -66,6 +66,33 @@ def clean_text(text: str) -> str:
     return text
 
 
+# Words that should never appear as 'suspicious' SHAP signals
+STOPWORDS = {
+    'the','a','an','is','are','was','were','be','been','being',
+    'have','has','had','do','does','did','will','would','could','should',
+    'may','might','shall','can','to','of','in','for','on','with','at',
+    'by','from','as','or','and','but','not','this','that','it','its',
+    'we','you','he','she','they','i','my','our','your','their',
+    'am','good','happy','name','hi','hello','thank','please','about'
+}
+
+# Minimum job-related words needed to treat text as a job posting
+JOB_KEYWORDS = {
+    'job','hiring','vacancy','apply','salary','experience','work',
+    'company','position','role','skills','requirements','resume','cv',
+    'joining','candidate','qualification','interview','office','remote',
+    'full time','part time','internship','fresher','lpa','ctc','per month',
+    'earn','income','payment','whatsapp','urgent','immediate','joining'
+}
+
+
+def is_job_posting(text: str) -> bool:
+    """Check if text looks like a job posting at all."""
+    text_lower = text.lower()
+    matched = sum(1 for kw in JOB_KEYWORDS if kw in text_lower)
+    return matched >= 2  # needs at least 2 job-related signals
+
+
 def analyze_text(text: str) -> dict:
     """
     Analyzes job posting text for fraud signals.
@@ -87,6 +114,16 @@ def analyze_text(text: str) -> dict:
             'risk_score': 0,
             'top_reasons': [],
             'warning': f'Text too short ({word_count} words). Please paste the full job posting for accurate results. Minimum 10 words required.'
+        }
+
+    # Check if this looks like a job posting at all
+    if not is_job_posting(text):
+        return {
+            'prediction': 0,
+            'probability': 0.05,
+            'risk_score': 5,
+            'top_reasons': [],
+            'warning': 'This does not appear to be a job posting. Please paste actual job posting content for accurate analysis.'
         }
 
     # If models aren't loaded, use keyword-based fallback
@@ -138,11 +175,12 @@ def analyze_text(text: str) -> dict:
                 reasons = [
                     {
                         'word': feat_names[i],
-                        # Clamp to [-1, 1] to prevent display of huge floats
                         'impact': round(float(np.clip(shap_val, -1.0, 1.0)), 4)
                     }
-                    for i, shap_val in nonzero_shap[:5]
-                ]
+                    for i, shap_val in nonzero_shap[:10]  # take top 10
+                    # Filter out stopwords and single chars from display
+                    if feat_names[i] not in STOPWORDS and len(feat_names[i]) > 2
+                ][:5]  # show only top 5 after filtering
         except Exception:
             pass
 

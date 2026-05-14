@@ -247,6 +247,17 @@ export default function AnalyzePage() {
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
             </div>
 
+            {/* Warning banner — shown when backend detects non-job text */}
+            {result.text_analysis?.warning && (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                <span className="text-2xl">⚠️</span>
+                <div>
+                  <p className="text-sm font-bold text-amber-400 mb-1">Input Notice</p>
+                  <p className="text-sm text-amber-300/80">{result.text_analysis.warning}</p>
+                </div>
+              </div>
+            )}
+
             <RiskGauge
               score={result.final_result.final_score}
               label={result.final_result.label}
