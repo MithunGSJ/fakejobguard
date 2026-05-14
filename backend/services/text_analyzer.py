@@ -77,6 +77,17 @@ def analyze_text(text: str) -> dict:
     - top_reasons: list of {word, impact} dicts from SHAP
     """
     cleaned = clean_text(text)
+    word_count = len(cleaned.split())
+
+    # Reject text that's too short to meaningfully analyze
+    if word_count < 10:
+        return {
+            'prediction': 0,
+            'probability': 0.0,
+            'risk_score': 0,
+            'top_reasons': [],
+            'warning': f'Text too short ({word_count} words). Please paste the full job posting for accurate results. Minimum 10 words required.'
+        }
 
     # If models aren't loaded, use keyword-based fallback
     if rf_model is None or tfidf is None:

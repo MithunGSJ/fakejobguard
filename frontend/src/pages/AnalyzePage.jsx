@@ -36,6 +36,12 @@ export default function AnalyzePage() {
       setError('Please provide at least one input: text, URL, or image');
       return;
     }
+    // Warn if text is the only input and it's too short
+    const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+    if (text && !url && !imageFile && wordCount < 10) {
+      setError(`Text too short (${wordCount} word${wordCount === 1 ? '' : 's'}). Please paste the full job posting — minimum 10 words for accurate analysis.`);
+      return;
+    }
     setLoading(true);
     setError('');
     setResult(null);
@@ -108,8 +114,14 @@ export default function AnalyzePage() {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
-              <p className="text-xs text-slate-600 mt-2">
-                {text.length} characters · Paste the complete job description for best results
+              <p className={`text-xs mt-2 transition-colors ${
+                text.length === 0 ? 'text-slate-600' :
+                text.trim().split(/\s+/).filter(Boolean).length < 10 ? 'text-amber-500' : 'text-emerald-500'
+              }`}>
+                {text.trim().split(/\s+/).filter(Boolean).length > 0
+                  ? `${text.trim().split(/\s+/).filter(Boolean).length} words${text.trim().split(/\s+/).filter(Boolean).length < 10 ? ' — need at least 10 for accurate results' : ' ✓ ready to analyze'}`
+                  : 'Paste the complete job description for best results'
+                }
               </p>
             </div>
           </div>
