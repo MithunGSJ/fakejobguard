@@ -11,7 +11,7 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 
 # Map: local filename -> Hugging Face raw file URL
 # Fill in your HF repo URL after uploading
-HF_REPO = os.getenv('HF_MODEL_REPO', '')
+HF_REPO = os.getenv('HF_MODEL_REPO', 'MithunGSJ/fakejobguard-models')
 
 MODEL_FILES = {
     'rf_model.pkl': f'https://huggingface.co/{HF_REPO}/resolve/main/rf_model.pkl',
