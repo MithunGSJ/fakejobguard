@@ -4,6 +4,57 @@ import { analyzeAll } from '../api/analyzeApi';
 import RiskGauge from '../components/RiskGauge';
 import ReasonCards from '../components/ReasonCards';
 
+// ── Full-screen warning modal ─────────────────────────────────────────────────
+function WarningModal({ message, onDismiss }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+         style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+      <div className="relative max-w-md w-full rounded-3xl border-2 border-amber-500/60
+                      bg-slate-900 shadow-2xl shadow-amber-500/20 p-8 text-center
+                      animate-pulse-once">
+        {/* Big warning icon */}
+        <div className="flex items-center justify-center mb-5">
+          <div className="w-24 h-24 rounded-full bg-amber-500/15 border-2 border-amber-500/40
+                          flex items-center justify-center">
+            <span className="text-5xl">⚠️</span>
+          </div>
+        </div>
+
+        {/* Title */}
+        <h2 className="text-2xl font-black text-amber-400 mb-3 tracking-tight">
+          Not a Job Posting!
+        </h2>
+
+        {/* Message */}
+        <p className="text-slate-300 text-sm leading-relaxed mb-6">
+          {message}
+        </p>
+
+        {/* What to do instead */}
+        <div className="rounded-xl bg-slate-800/80 border border-slate-700/50 p-4 mb-6 text-left">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Try pasting:</p>
+          <ul className="text-xs text-slate-400 space-y-1">
+            <li>✅ A job description copied from LinkedIn, Naukri, or Indeed</li>
+            <li>✅ A WhatsApp job offer message you received</li>
+            <li>✅ A job poster image in the Image tab</li>
+            <li>✅ The URL of a job posting in the URL tab</li>
+          </ul>
+        </div>
+
+        {/* Dismiss button */}
+        <button
+          onClick={onDismiss}
+          className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400
+                     text-slate-900 font-black text-sm tracking-wide
+                     transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+        >
+          Got it — Try Again
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AnalyzePage() {
   const [text, setText] = useState('');
   const [url, setUrl] = useState('');
@@ -13,6 +64,7 @@ export default function AnalyzePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('text');
+  const [warningModal, setWarningModal] = useState(null); // { message }
   const resultRef = useRef(null);
 
   const handleImageChange = (e) => {
@@ -47,6 +99,16 @@ export default function AnalyzePage() {
     setResult(null);
     try {
       const data = await analyzeAll({ text, url, imageFile });
+
+      // Check if any analysis returned a warning (non-job content)
+      const warning = data.text_analysis?.warning;
+      if (warning) {
+        setWarningModal({ message: warning });
+        setResult(null);
+        setLoading(false);
+        return;
+      }
+
       setResult(data);
       // Scroll to results
       setTimeout(() => {
@@ -70,6 +132,13 @@ export default function AnalyzePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950">
+      {/* Full-screen warning modal */}
+      {warningModal && (
+        <WarningModal
+          message={warningModal.message}
+          onDismiss={() => setWarningModal(null)}
+        />
+      )}
       <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-10">
@@ -247,16 +316,7 @@ export default function AnalyzePage() {
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
             </div>
 
-            {/* Warning banner — shown when backend detects non-job text */}
-            {result.text_analysis?.warning && (
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                <span className="text-2xl">⚠️</span>
-                <div>
-                  <p className="text-sm font-bold text-amber-400 mb-1">Input Notice</p>
-                  <p className="text-sm text-amber-300/80">{result.text_analysis.warning}</p>
-                </div>
-              </div>
-            )}
+
 
             <RiskGauge
               score={result.final_result.final_score}
